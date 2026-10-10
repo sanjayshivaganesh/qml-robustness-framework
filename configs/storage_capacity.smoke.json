@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "document_role": "benchmark_request",
+  "loader_status": "not_implemented",
+  "experiment": {
+    "experiment_id": "storage_capacity_smoke",
+    "protocol": "storage_capacity"
+  },
+  "historical_reference": {
+    "path": "baseline/configs/original_experiments.json",
+    "experiment_key": "storage_capacity",
+    "role": "audit_record_only"
+  },
+  "grid": "smoke",
+  "comparable_to_archive": false,
+  "dataset": {
+    "pattern_generator": "numpy.random",
+    "alphabet": [-1, 1],
+    "m_rule_id": "range_1_through_n_or_reduced_list_at_n_ge_16",
+    "reduced_scale_for_large_n": true,
+    "hopfield_max_factor": 1.0,
+    "qam_max_factor": 1.0,
+    "n_at_least_16_m_values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16],
+    "widths": [
+      {"n_bits": 8, "m_values": [1]}
+    ]
+  },
+  "models": [
+    {
+      "procedure_id": "hopfield_synchronous",
+      "source": "src.hopfield.Hopfield",
+      "parameters": {"steps": 10},
+      "training": {"operation": "train"},
+      "recall": {"operation": "recall", "returns": ["pattern"]}
+    },
+    {
+      "procedure_id": "qam_ry_linear",
+      "source": "src.qam.train_ry_linear_qam",
+      "recall": "src.qam.qam_recall",
+      "parameters": {
+        "depth_rule_id": "min_8_and_n_bits",
+        "train_steps": 100,
+        "lr": 0.05,
+        "return_tuple": true,
+        "init_scale": 0.01,
+        "encoding": "RY(x * pi)",
+        "ansatz": "RY + linear CNOT"
+      },
+      "training": {"operation": "train", "return_tuple": true}
+    }
+  ],
+  "perturbation": {
+    "procedure_id": "fixed_count",
+    "implementation": "src.data_generation.corrupt_fixed_count",
+    "level": 0.15,
+    "rng": "numpy.random",
+    "flip_rule": "max(1, int(n_bits * level))"
+  },
+  "metrics": ["batch_recall"],
+  "statistics": {
+    "bootstrap": {
+      "implementation": "experiments.storage_capacity.bootstrap_ci",
+      "samples": 2000,
+      "confidence": 0.95,
+      "separate_seed": false,
+      "rng": "numpy.random"
+    },
+    "hypothesis_test": {
+      "name": "wilcoxon",
+      "argument_order": ["hopfield", "qam"],
+      "on_failure": null
+    },
+    "critical_capacity": {
+      "definition": "m / n_bits",
+      "threshold": 0.75,
+      "comparison": "strictly_below",
+      "scan": "capacity_ratio ascending"
+    },
+    "not_used": ["experiments.storage_capacity.confidence_interval"]
+  },
+  "seeds": {
+    "values": [0, 1, 2, 3, 4],
+    "generator": "numpy.random.seed",
+    "reapplied_for_every_cell": true,
+    "formula": "the trial index in range(trials_per_m)"
+  },
+  "training_schedule": "reseed_each_trial_then_hopfield_then_qam",
+  "declared_cell_count": 1,
+  "declared_qam_trainings": 5,
+  "execution": {
+    "process_model": "single_process",
+    "historical_process_model": "single_process",
+    "max_widths": 1,
+    "max_m_values": 1,
+    "caps_are_authoritative_in": "benchmark.protocols.storage_capacity"
+  },
+  "output": {
+    "destination": "runs/storage_capacity_smoke",
+    "overwrite_archived_results": false,
+    "if_destination_non_empty": "refuse",
+    "files": [
+      "manifest.json",
+      "configuration.json",
+      "sweep.csv",
+      "sweep.json",
+      "phase_transition.csv",
+      "phase_transition.json",
+      "significance.csv",
+      "significance.json",
+      "trials.json"
+    ]
+  },
+  "setting_origin": {
+    "dataset.widths": "demonstration",
+    "dataset.m_rule_id": "historical",
+    "dataset.reduced_scale_for_large_n": "historical",
+    "dataset.pattern_generator": "historical",
+    "models[0].procedure_id": "historical",
+    "models[0].parameters.steps": "historical",
+    "models[1].procedure_id": "historical",
+    "models[1].parameters.depth_rule_id": "historical",
+    "models[1].parameters.train_steps": "historical",
+    "models[1].parameters.lr": "historical",
+    "models[1].parameters.return_tuple": "historical",
+    "perturbation.level": "historical",
+    "seeds.values": "historical",
+    "statistics.bootstrap.samples": "historical",
+    "statistics.bootstrap.separate_seed": "historical",
+    "statistics.hypothesis_test.on_failure": "historical",
+    "statistics.critical_capacity.threshold": "historical",
+    "grid": "demonstration",
+    "execution.process_model": "historical",
+    "output.destination": "demonstration",
+    "comparable_to_archive": "demonstration"
+  }
+}

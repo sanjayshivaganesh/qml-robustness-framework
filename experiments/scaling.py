@@ -1,11 +1,7 @@
-"""Scaling sweep: pattern length vs accuracy, runtime, and parameter count.
+"""Pattern-length scaling with Bernoulli noise.
 
-Independent variables: ``n_bits`` and Bernoulli noise ``noise_p``. Number of
-stored patterns is ``m = min(max(1, n_bits // 2), 6)``.
-
-Hopfield uses random-order asynchronous updates. QAM uses a Rot ansatz with
-minibatch training and early stopping. Both of those choices are specific
-to this experiment.
+Hopfield: random-order async updates. QAM: Rot ansatz, minibatch, early stop.
+``m = min(max(1, n_bits // 2), 6)``.
 """
 
 import pennylane as qml
@@ -20,7 +16,7 @@ from src.hopfield import HopfieldAsyncRandom as Hopfield
 from src.paths import results_subdir
 
 # ------------------------------
-# Quantum Associative Memory (Rot ansatz + minibatch / early stopping)
+# QAM (Rot ansatz, minibatch, early stopping)
 # ------------------------------
 class QAM:
     def __init__(self, n_bits, depth=3, steps=200, lr=0.05):
@@ -29,8 +25,6 @@ class QAM:
         self.steps = steps
         self.lr = lr
         self.params = np.random.randn(self.depth, n_bits, 3) * 0.01
-
-        # Quantum device
         self.dev = qml.device("default.qubit", wires=n_bits)
 
     def ansatz(self, params, x):
@@ -49,7 +43,7 @@ class QAM:
             return [qml.expval(qml.PauliZ(i)) for i in range(self.n_bits)]
 
         def loss(params):
-            # stochastic minibatch training for speed
+            # minibatch of 2, same as the original scaling script
             batch_size = min(2, len(patterns))
             idx = np.random.choice(len(patterns), batch_size, replace=False)
 
@@ -154,7 +148,6 @@ def main():
                 bit_acc_qam = []
                 for p in patterns:
                     noisy = p.copy()
-                    # flip noise_p bits
                     flip_mask = np.random.rand(n_bits) < noise_p
                     noisy[flip_mask] *= -1
                     recalled = qam.recall(noisy)

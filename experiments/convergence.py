@@ -1,9 +1,7 @@
-"""QAM training-loss convergence check (RY-linear ansatz).
+"""QAM training loss vs step (same RY-linear circuit as the capacity sweep).
 
-Records mean loss vs training step for the same (n, m) cases used in the
-circuit-depth experiment. Used to justify ``train_steps=100`` in the
-storage-capacity sweep: if post-step-100 improvement is small, the shorter
-budget is reasonable.
+If loss barely moves after step 100, ``train_steps=100`` in the capacity
+experiment is a reasonable budget.
 """
 
 import numpy as onp

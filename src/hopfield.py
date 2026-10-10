@@ -1,16 +1,13 @@
-"""Classical Hopfield associative memory with Hebbian storage.
+"""Hebbian Hopfield network.
 
-This repository uses more than one recall schedule. They are not
-interchangeable:
+Recall is not the same in every experiment:
 
-- ``Hopfield`` — synchronous ``sign(W x)`` updates (noise sweep, storage
-  capacity, statistical significance).
-- ``hopfield_async_sequential_recall`` — fixed-index sequential updates
-  with energy tracking (large-scale inference experiment).
-- ``HopfieldAsyncRandom`` — random-order sequential updates using the
-  PennyLane numpy RNG (scaling experiment). That class lives here so the
-  scaling script does not re-implement Hebbian storage, but it must keep
-  using PennyLane's RNG stream to preserve the original trial behavior.
+- ``Hopfield``: synchronous ``sign(Wx)`` (noise sweep, capacity, stats).
+- ``hopfield_async_sequential_recall``: sequential async updates + energy
+  (inference experiment).
+- ``HopfieldAsyncRandom``: random-order async updates using PennyLane's
+  numpy RNG, so the scaling experiment keeps the same random stream as the
+  original script (patterns and permutations shared that RNG).
 """
 
 import time
@@ -43,9 +40,9 @@ class Hopfield:
         return x
 
     def recall_timed(self, pattern, steps=None):
-        """Return ``(recalled_pattern, inference_time / n_bits)``.
+        """Recall and return ``(pattern, time / n_bits)``.
 
-        Matches the timing convention in the original noise-robustness sweep.
+        Same timing convention as the original noise-robustness sweep.
         """
         start_time = time.time()
         x = self.recall(pattern, steps=steps)
@@ -53,7 +50,7 @@ class Hopfield:
 
 
 def hopfield_hebbian_weights(patterns):
-    """Hebbian weight matrix with zero diagonal, normalized by pattern count."""
+    """Hebbian W with zero diagonal, divided by the number of patterns."""
     n_patterns = len(patterns)
     W = (np.asarray(patterns).T @ np.asarray(patterns)) / n_patterns
     np.fill_diagonal(W, 0)
@@ -61,7 +58,7 @@ def hopfield_hebbian_weights(patterns):
 
 
 def hopfield_async_sequential_recall(W, noisy_input, steps=20):
-    """Asynchronous sequential recall used by the inference experiment.
+    """Sequential async recall for the inference experiment.
 
     Returns ``(final_state, final_energy, energy_drop)``.
     """
@@ -78,11 +75,10 @@ def hopfield_async_sequential_recall(W, noisy_input, steps=20):
 
 
 class HopfieldAsyncRandom:
-    """Hopfield network with random-order asynchronous updates.
+    """Random-order async Hopfield (scaling experiment).
 
-    Uses PennyLane's numpy RNG for the update permutation so the scaling
-    experiment consumes the same random stream as the original script
-    (which imported ``pennylane.numpy as np`` for both patterns and recall).
+    Permutations use PennyLane numpy so they share the RNG with pattern
+    generation, matching the original ``pennylane.numpy as np`` script.
     """
 
     def __init__(self, n_bits, steps=10):

@@ -1,1 +1,1 @@
-"""Plotting and utility entry points. Run as ``python -m scripts.<name>``."""
+"""Plotting and helpers. ``python -m scripts.<name>``."""

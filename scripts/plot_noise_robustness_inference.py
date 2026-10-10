@@ -198,7 +198,7 @@ def main():
         plt.savefig(plots_dir / f"{model}_heatmap.png", dpi=300)
         plt.close()
 
-    print(f"Finished generating all figures. Saved to: {plots_dir}")
+    print(f"Saved plots under {plots_dir}")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,7 @@
-"""Large-scale noise-robustness inference experiment.
+"""Large-n noise/capacity grid.
 
-Independent variables: ``n_bits``, ``capacity_ratio``, and Bernoulli noise
-``noise_p``. Hopfield uses asynchronous sequential updates. The model labeled
-``qam`` in the output CSVs is a classical nearest-neighbor Hamming proxy,
-not the variational quantum circuit used in the other experiments.
+Hopfield uses sequential async updates. CSV rows with ``model="qam"`` are
+Hamming nearest neighbor, not the variational circuit.
 """
 
 import os
@@ -19,13 +17,13 @@ from src.paths import results_subdir
 
 
 # ==============================
-# CONFIG (publication-grade)
+# CONFIG
 # ==============================
 N_BITS_LIST = [8, 12, 16, 24, 32, 48, 64, 96, 128]
 CAPACITY_RATIOS = [0.1, 0.25, 0.5, 0.75, 1.0]
-NOISE_LEVELS = np.linspace(0.0, 0.5, 16)  # extended robustness range
-RANDOM_SEED_BASE = 42  # global reproducibility anchor
-TRIALS_PER_CONFIG = 300  # stronger statistical power for publication-level results
+NOISE_LEVELS = np.linspace(0.0, 0.5, 16)
+RANDOM_SEED_BASE = 42
+TRIALS_PER_CONFIG = 300
 EXPERIMENT_NAME = "noise_robustness_inference"
 
 
@@ -49,14 +47,9 @@ def run_trial(task):
     seed_all(seed)
 
     n_patterns = max(1, int(n_bits * capacity_ratio))
-
-    # generate patterns
     patterns = np.random.choice([-1, 1], size=(n_patterns, n_bits))
-
-    # choose target
     true_pattern = patterns[np.random.randint(0, n_patterns)].copy()
 
-    # apply noise
     noise_mask = np.random.rand(n_bits) < noise_p
     noisy_input = true_pattern.copy()
     noisy_input[noise_mask] *= -1
@@ -81,9 +74,6 @@ def run_trial(task):
     qam_pred = nearest_neighbor_recall(patterns, noisy_input)
     qam_time = time.time() - t0
 
-    # ==============================
-    # Metrics
-    # ==============================
     hop_bit, hop_full, hop_hamming_error = compute_metrics(hopfield_pred, true_pattern)
     qam_bit, qam_full, qam_hamming_error = compute_metrics(qam_pred, true_pattern)
 
@@ -127,7 +117,7 @@ def run_trial(task):
 
 
 # ==============================
-# AGGREGATION (paper-level)
+# AGGREGATION
 # ==============================
 def aggregate_results(df):
     grouped = df.groupby(["model", "n_bits", "capacity_ratio", "noise_p"])
@@ -156,7 +146,7 @@ def aggregate_results(df):
         energy_drop_std=("energy_drop", "std"),
     ).reset_index()
 
-    # bootstrap CI for robustness (stronger than Gaussian assumption)
+    # bootstrap CI (percentile, not Gaussian)
     bit_ci_low = []
     bit_ci_high = []
     full_ci_low = []

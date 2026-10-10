@@ -1,8 +1,7 @@
-"""Critical noise threshold vs capacity ratio (accuracy floor 0.50).
+"""Critical noise vs capacity (full-accuracy floor 0.50).
 
-This is a different threshold definition from
-``plot_inference_paper_figures.py`` (which uses 0.90). Both CSVs are
-preserved because they are not interchangeable.
+``plot_inference_paper_figures.py`` uses 0.90 instead. The two CSVs are
+not the same quantity.
 """
 
 import pandas as pd

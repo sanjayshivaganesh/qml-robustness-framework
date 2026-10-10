@@ -1,9 +1,6 @@
-"""Statistical significance and bootstrap confidence intervals.
+"""Hopfield vs PauliX-encoding QAM: bootstrap CIs and Wilcoxon tests.
 
-Compares synchronous Hopfield recall to a PauliX-encoding variational QAM
-across capacity ratios and Bernoulli noise levels.
-
-Independent variables: ``n_bits``, ``capacity_ratio``, ``noise``.
+Varies ``n_bits``, capacity ratio, and Bernoulli noise.
 """
 
 import numpy as np
@@ -37,19 +34,17 @@ EXPERIMENT_NAME = "statistical_significance"
 
 
 # =========================
-# QAM (PauliX encoding — experiment-specific)
+# QAM (PauliX encoding)
 # =========================
 def build_qam(n_bits):
     dev = qml.device("default.qubit", wires=n_bits)
 
     @qml.qnode(dev)
     def circuit(params, x):
-        # encoding
         for i, bit in enumerate(x):
             if bit == -1:
                 qml.PauliX(wires=i)
 
-        # variational layers
         for d in range(params.shape[0]):
             for i in range(n_bits):
                 qml.RY(params[d, i], wires=i)
@@ -228,7 +223,7 @@ def main():
     summary_df = pd.DataFrame(summaries)
     summary_df.to_csv(summary_dir / "statistical_summary.csv", index=False)
 
-    print("Generating publication-quality plots...")
+    print("Saving plots...")
 
     plt.figure(figsize=(9, 6))
 
@@ -298,7 +293,6 @@ def main():
 
     print("\n=== EXPERIMENT COMPLETE ===")
     print("Statistical summary saved")
-    print("Publication-quality plots generated")
     print(f"Total runtime: {total_time:.2f} seconds")
 
 

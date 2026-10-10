@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "document_role": "benchmark_request",
+  "loader_status": "not_implemented",
+  "experiment": {
+    "experiment_id": "noise_robustness_inference_smoke",
+    "protocol": "noise_robustness_inference"
+  },
+  "historical_reference": {
+    "path": "baseline/configs/original_experiments.json",
+    "experiment_key": "noise_robustness_inference",
+    "role": "audit_record_only"
+  },
+  "grid": "smoke",
+  "comparable_to_archive": false,
+  "dataset": {
+    "pattern_generator": "numpy.random",
+    "n_bits_list": [8],
+    "capacity_ratios": [0.1],
+    "noise_levels": [0.03333333333333333],
+    "n_patterns": "max(1, int(n_bits * capacity_ratio))",
+    "query": "one stored pattern per trial"
+  },
+  "models": [
+    {
+      "procedure_id": "hopfield_async_sequential",
+      "role": "sequential_async_recall",
+      "source": "src.hopfield.hopfield_async_sequential_recall",
+      "csv_model_label": "hopfield",
+      "parameters": {
+        "steps": 20,
+        "energy": "E = -0.5 * x^T W x"
+      }
+    },
+    {
+      "procedure_id": "hamming_nearest",
+      "role": "classical_nearest_neighbour",
+      "source": "src.qam.nearest_neighbor_recall",
+      "csv_model_label": "qam",
+      "variational": false,
+      "parameters": {}
+    }
+  ],
+  "perturbation": {
+    "procedure_id": "inline_bernoulli",
+    "implementation": "experiments.noise_robustness_inference.run_trial",
+    "mask": "numpy.random.rand(n_bits) < noise_p",
+    "rng": "numpy.random"
+  },
+  "metrics": ["compute_metrics", "recovery_gain"],
+  "aggregation": {
+    "implementation": "experiments.noise_robustness_inference.aggregate_results",
+    "bootstrap_samples": 200,
+    "bootstrap_seeded": false,
+    "gaussian_denominator": "TRIALS_PER_CONFIG"
+  },
+  "randomness": {
+    "base": 42,
+    "formula": "42 + trial_id + int(n_bits * 1000) + int(capacity_ratio * 100) + int(noise_p * 1000)",
+    "generator": "numpy.random.seed",
+    "pennylane_seed_call": false
+  },
+  "trials_per_config": 300,
+  "training_schedule": "no_training",
+  "declared_task_count": 300,
+  "declared_raw_rows": 600,
+  "declared_summary_rows": 2,
+  "execution": {
+    "max_widths": 1,
+    "max_capacities": 1,
+    "max_noise_levels": 1,
+    "process_model": "single_process",
+    "historical_process_model": "spawn_pool"
+  },
+  "output": {
+    "destination": "runs/noise_robustness_inference_smoke",
+    "files": [
+      "manifest.json",
+      "configuration.json",
+      "rows.csv",
+      "rows.json",
+      "summary.csv",
+      "summary.json"
+    ],
+    "archive_comparison": false
+  },
+  "setting_origin": {
+    "n_bits_list": "demonstration",
+    "capacity_ratios": "demonstration",
+    "noise_levels": "demonstration",
+    "trials_per_config": "historical",
+    "seed_formula": "historical",
+    "models": "historical",
+    "aggregation": "historical",
+    "process_model": "demonstration",
+    "destination": "demonstration",
+    "comparable_to_archive": "demonstration"
+  }
+}

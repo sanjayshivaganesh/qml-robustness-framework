@@ -1,1 +1,1 @@
-"""Experiment entry points. Run as ``python -m experiments.<name>``."""
+"""Experiment modules. ``python -m experiments.<name>``."""

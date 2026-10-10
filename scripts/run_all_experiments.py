@@ -1,9 +1,6 @@
-"""List, or optionally run, every experiment from the project root.
+"""Run experiments from the repo root. Does nothing unless ``--run`` / ``--only``.
 
-Full experiments are computationally expensive (especially the large-scale
-inference study). This script does not run them unless ``--run`` is passed.
-Existing result files are not deleted first; re-running will overwrite CSVs
-in the corresponding results directories.
+Re-running overwrites CSVs in that experiment's results directory.
 """
 
 import argparse

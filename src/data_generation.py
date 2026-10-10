@@ -1,21 +1,17 @@
-"""Random bipolar patterns and input-corruption utilities."""
+"""Random ±1 patterns and query corruption."""
 
 import numpy as np
 
 
 def random_bipolar_patterns(n_patterns, n_bits, rng=None):
-    """Draw ``n_patterns`` independent random ±1 patterns of length ``n_bits``."""
+    """Independent random ±1 patterns, shape ``(n_patterns, n_bits)``."""
     if rng is None:
         rng = np.random
     return rng.choice([-1, 1], size=(n_patterns, n_bits))
 
 
 def corrupt_bernoulli(pattern, rate, rng=None):
-    """Flip each bit independently with probability ``rate``.
-
-    Used by the noise-robustness sweep, scaling, statistical-significance,
-    and large-scale inference experiments.
-    """
+    """Flip each bit independently with probability ``rate``."""
     if rng is None:
         rng = np.random
     corrupted = pattern.copy()
@@ -25,11 +21,10 @@ def corrupt_bernoulli(pattern, rate, rng=None):
 
 
 def corrupt_fixed_count(pattern, noise_level, rng=None):
-    """Flip exactly ``max(1, int(len(pattern) * noise_level))`` bits.
+    """Flip ``max(1, int(len(pattern) * noise_level))`` bits.
 
-    Used by the storage-capacity and circuit-depth experiments.
-    At ``noise_level == 0`` this still flips one bit, matching the original
-    experiment code.
+    Capacity and depth use this with ``p=0.15``. At ``p=0`` it would still
+    flip one bit; that matches the original helper.
     """
     if rng is None:
         rng = np.random

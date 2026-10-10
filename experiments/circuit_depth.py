@@ -1,8 +1,6 @@
-"""Circuit-depth sensitivity of the RY-linear variational QAM.
+"""QAM bitwise accuracy vs circuit depth (RY-linear ansatz).
 
-Independent variable: circuit depth. Pattern length and number of stored
-patterns are taken from a small set of representative (n, m) cases.
-If recall accuracy plateaus as depth increases, depth is not the bottleneck.
+Fixed (n, m) pairs. If accuracy flattens with depth, depth is not the limiter.
 """
 
 from pennylane import numpy as np

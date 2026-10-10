@@ -1,1 +1,1 @@
-"""Package-level tests directory."""
+"""Import and path tests."""

@@ -1,7 +1,6 @@
-"""Storage-capacity sweep: RY-linear variational QAM vs synchronous Hopfield.
+"""Accuracy vs number of stored patterns (RY-linear QAM vs Hopfield).
 
-Independent variable: number of stored patterns ``m`` at fixed pattern
-lengths ``n_bits``. Recall uses a fixed-count bit-flip corruption of 15%.
+Recall uses a 15% fixed-count bit flip.
 """
 
 from pennylane import numpy as np
@@ -21,15 +20,15 @@ from src.paths import results_subdir
 # ----------------------------
 # Config
 # ----------------------------
-n_bits_list = [8, 12, 16]  # pattern lengths
+n_bits_list = [8, 12, 16]
 depth_policy = lambda n: min(8, n)
-trials_per_m = 5           # statistically sufficient while keeping runtime practical
-hopfield_max_factor = 1.0   # Hopfield max m = n_bits
-qam_max_factor = 1.0        # QAM tested up to same storage capacity as Hopfield
+trials_per_m = 5
+hopfield_max_factor = 1.0
+qam_max_factor = 1.0
 train_steps = 100
 lr = 0.05
 ansatz_type = "RY_linear"
-recall_noise = 0.15  # fraction of bits flipped during recall
+recall_noise = 0.15
 bootstrap_samples = 2000
 reduced_scale_for_large_n = True
 
@@ -67,8 +66,7 @@ def main():
 
         max_capacity = max(max_m_hopfield, max_m_qam)
 
-        # Reduce extremely expensive high-capacity sweeps for large systems
-        # while preserving the scientifically important transition region.
+        # n=16: skip some m values past 10 to cut runtime; keep the drop-off region.
         if reduced_scale_for_large_n and n_bits >= 16:
             m_values = list(range(1, 11)) + [12, 14, 16]
         else:
@@ -392,7 +390,7 @@ def main():
         f.write("- Confidence intervals estimated via bootstrap resampling.\n")
 
     print(f"Experiment summary saved at {summary_txt}")
-    print("Publication-quality storage capacity experiment complete.")
+    print("Storage capacity sweep complete.")
 
 
 if __name__ == "__main__":

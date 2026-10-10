@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "document_role": "benchmark_request",
+  "loader_status": "not_implemented",
+  "experiment": {
+    "experiment_id": "circuit_depth",
+    "protocol": "circuit_depth"
+  },
+  "historical_reference": {
+    "path": "baseline/configs/original_experiments.json",
+    "experiment_key": "circuit_depth",
+    "role": "audit_record_only"
+  },
+  "grid": "full",
+  "comparable_to_archive": false,
+  "dataset": {
+    "pattern_generator": "numpy.random",
+    "cases": [
+      {"n_bits": 8, "m": 4},
+      {"n_bits": 12, "m": 8},
+      {"n_bits": 16, "m": 12}
+    ],
+    "depths": [1, 2, 4, 6, 8, 10, 12],
+    "depth_definition": "ansatz_layer_count",
+    "depth_rule_not_applied": "min(8, n_bits)"
+  },
+  "models": [
+    {
+      "procedure_id": "qam_ry_linear",
+      "role": "only_model",
+      "source": "src.qam.train_ry_linear_qam",
+      "recall": "inline_sign_of_circuit_expectations",
+      "parameters": {
+        "return_tuple": false,
+        "train_steps": 100,
+        "lr": 0.05,
+        "init_scale": 0.01,
+        "encoding": "RY(x * pi)",
+        "ansatz": "RY + linear CNOT"
+      }
+    }
+  ],
+  "perturbation": {
+    "procedure_id": "fixed_count",
+    "implementation": "src.data_generation.corrupt_fixed_count",
+    "level": 0.15,
+    "rng": "numpy.random",
+    "flip_rule": "max(1, int(n_bits * level))",
+    "when": "each_stored_pattern_after_training"
+  },
+  "metrics": ["batch_recall"],
+  "aggregation": {
+    "method": "mean_over_trials",
+    "bootstrap_used": false,
+    "parameter_count": "depth * n_bits"
+  },
+  "seeds": {
+    "values": [0, 1, 2, 3, 4],
+    "generator": "numpy.random.seed",
+    "reapplied_for_every_cell": true,
+    "pennylane_seed_call": false
+  },
+  "training_schedule": "reseed_each_trial_then_train_then_fixed_count",
+  "declared_cell_count": 21,
+  "declared_trainings": 105,
+  "execution": {
+    "max_cases": 1,
+    "max_depths": 1,
+    "process_model": "single_process",
+    "historical_process_model": "single_process"
+  },
+  "output": {
+    "destination": "runs/circuit_depth",
+    "files": [
+      "manifest.json",
+      "configuration.json",
+      "rows.csv",
+      "rows.json",
+      "trials.json"
+    ],
+    "archive_comparison": false
+  },
+  "setting_origin": {
+    "cases": "historical",
+    "depths": "historical",
+    "return_tuple": "historical",
+    "train_steps": "historical",
+    "lr": "historical",
+    "recall_noise": "historical",
+    "seeds": "historical",
+    "aggregation": "historical",
+    "process_model": "historical",
+    "destination": "demonstration",
+    "comparable_to_archive": "demonstration"
+  }
+}

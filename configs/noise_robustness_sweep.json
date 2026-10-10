@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "document_role": "benchmark_request",
+  "loader_status": "not_implemented",
+  "experiment": {
+    "experiment_id": "noise_robustness_sweep",
+    "protocol": "noise_robustness_sweep"
+  },
+  "historical_reference": {
+    "path": "baseline/configs/original_experiments.json",
+    "experiment_key": "noise_robustness_sweep",
+    "role": "audit_record_only"
+  },
+  "grid": "full",
+  "comparable_to_archive": false,
+  "dataset": {
+    "pattern_generator": "numpy.random",
+    "alphabet": [-1, 1],
+    "n_bits_list": [4, 6, 8, 10],
+    "n_patterns": {
+      "rule_id": "max_one_or_int_capacity_ratio_times_n_bits",
+      "capacity_ratio": 0.3
+    }
+  },
+  "models": [
+    {
+      "procedure_id": "hopfield_synchronous",
+      "source": "src.hopfield.Hopfield",
+      "parameters": {
+        "steps": 10
+      },
+      "training": {
+        "operation": "train"
+      },
+      "recall": {
+        "operation": "recall_timed",
+        "returns": ["pattern", "wall_time_per_bit"]
+      }
+    },
+    {
+      "procedure_id": "qam_rot_fullbatch",
+      "source": "experiments.noise_robustness_sweep.QAM",
+      "parameters": {
+        "depth_argument": 6,
+        "depth_used_rule_id": "min_depth_argument_and_n_bits",
+        "train_steps": 300,
+        "lr": 0.05
+      },
+      "rng": {
+        "family": "legacy_global",
+        "constructor_reseeds": true,
+        "reseed_value": 42,
+        "seed_policy_id": "legacy_global_trial_seed_then_qam_constructor_reseed_42"
+      },
+      "training": {
+        "operation": "train"
+      },
+      "recall": {
+        "operation": "recall",
+        "returns": ["pattern", "wall_time_per_bit"]
+      }
+    }
+  ],
+  "perturbation": {
+    "procedure_id": "bernoulli",
+    "levels": [0.0, 0.1, 0.2, 0.3, 0.4],
+    "when": "each_stored_pattern_after_that_model_trains"
+  },
+  "metrics": ["batch_recall", "gaussian_ci_population"],
+  "timings": ["train_time_seconds", "mean_recall_time_per_bit"],
+  "seeds": {
+    "trial_seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+    "trial_count": 30,
+    "seed_policy_id": "legacy_global_trial_seed_then_qam_constructor_reseed_42"
+  },
+  "declared_cell_count": 600,
+  "execution": {
+    "process_model": "single_process",
+    "max_cells": 4,
+    "max_train_steps": 5,
+    "caps_are_authoritative_in": "benchmark.protocols.noise_robustness_sweep"
+  },
+  "output": {
+    "destination": "runs/noise_robustness_sweep",
+    "overwrite_archived_results": false,
+    "if_destination_non_empty": "refuse",
+    "files": ["manifest.json", "trials.csv", "aggregates.csv", "trials.json"]
+  },
+  "setting_origin": {
+    "dataset.pattern_generator": "historical",
+    "dataset.alphabet": "historical",
+    "dataset.n_bits_list": "historical",
+    "dataset.n_patterns.rule_id": "historical",
+    "dataset.n_patterns.capacity_ratio": "historical",
+    "models[0].procedure_id": "historical",
+    "models[0].parameters.steps": "historical",
+    "models[1].procedure_id": "historical",
+    "models[1].parameters.depth_argument": "historical",
+    "models[1].parameters.depth_used_rule_id": "historical",
+    "models[1].parameters.train_steps": "historical",
+    "models[1].parameters.lr": "historical",
+    "models[1].rng.reseed_value": "historical",
+    "models[1].rng.seed_policy_id": "historical",
+    "perturbation.procedure_id": "historical",
+    "perturbation.levels": "historical",
+    "metrics": "historical",
+    "timings": "historical",
+    "seeds.trial_seeds": "historical",
+    "seeds.trial_count": "historical",
+    "grid": "historical",
+    "execution.process_model": "demonstration",
+    "output.destination": "demonstration",
+    "comparable_to_archive": "demonstration"
+  }
+}

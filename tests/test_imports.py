@@ -1,4 +1,4 @@
-"""Import and path checks. These tests do not run scientific experiments."""
+"""Import and path checks. Does not run the scientific experiments."""
 
 import importlib
 import inspect
@@ -70,7 +70,7 @@ def test_src_exports_exist(module_name, names):
 
 
 def test_src_qam_has_no_qam_class():
-    """QAM is not a single shared class; do not invent one for old imports."""
+    """Shared QAM code is functions, not a QAM class."""
     module = importlib.import_module("src.qam")
     assert not hasattr(module, "QAM")
     assert not hasattr(module, "QuantumAssociativeMemory")

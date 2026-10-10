@@ -1,7 +1,6 @@
-"""Noise-robustness sweep: variational Rot-ansatz QAM vs synchronous Hopfield.
+"""Rot-ansatz QAM vs synchronous Hopfield vs Bernoulli bit-flip noise.
 
-Independent variables: pattern length ``n_bits`` and Bernoulli bit-flip
-probability ``corruption``. Capacity is held at ``capacity_ratio * n_bits``.
+``n_bits`` and corruption rate vary; ``m = max(1, int(0.3 * n_bits))``.
 """
 
 import numpy as np
@@ -21,7 +20,7 @@ from src.paths import results_subdir
 
 
 # ------------------------------
-# Quantum Associative Memory (Rot ansatz — experiment-specific)
+# QAM (Rot ansatz; this experiment only)
 # ------------------------------
 class QAM:
     def __init__(self, n_bits, depth=6, train_steps=300, lr=0.05):
@@ -40,7 +39,7 @@ class QAM:
 
         @qml.qnode(self.dev)
         def circuit(params, x):
-            # richer encoding
+            # RX + RY encoding (not the RY-only circuit used in capacity/depth)
             for i in range(self.n_bits):
                 qml.RX(x[i] * np.pi, wires=i)
                 qml.RY(x[i] * np.pi / 2, wires=i)
@@ -88,7 +87,6 @@ n_bits_list = [4, 6, 8, 10]
 trials = 30
 corruption_rates = [0.0, 0.1, 0.2, 0.3, 0.4]
 
-# More principled capacity control
 capacity_ratio = 0.3
 
 depth = 6

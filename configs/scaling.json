@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "document_role": "benchmark_request",
+  "loader_status": "not_implemented",
+  "experiment": {
+    "experiment_id": "scaling",
+    "protocol": "scaling"
+  },
+  "historical_reference": {
+    "path": "baseline/configs/original_experiments.json",
+    "experiment_key": "scaling",
+    "role": "audit_record_only"
+  },
+  "grid": "full",
+  "comparable_to_archive": false,
+  "dataset": {
+    "pattern_generator": "pennylane.numpy.random",
+    "alphabet": [-1, 1],
+    "n_bits_list": [4, 6, 8, 12, 16],
+    "n_patterns": {
+      "rule_id": "min_max_one_or_half_n_bits_capped_at_6"
+    }
+  },
+  "models": [
+    {
+      "procedure_id": "hopfield_async_random",
+      "source": "src.hopfield.HopfieldAsyncRandom",
+      "parameters": {"steps": 10},
+      "training": {"operation": "train"},
+      "recall": {"operation": "recall", "returns": ["pattern"]}
+    },
+    {
+      "procedure_id": "qam_rot_minibatch",
+      "source": "experiments.scaling.QAM",
+      "parameters": {
+        "depth_rule_id": "min_6_and_n_bits",
+        "steps": 200,
+        "lr": 0.05,
+        "minibatch": 2,
+        "early_stop_patience": 15,
+        "early_stop_delta": 0.0001
+      },
+      "rng": {
+        "family": "legacy_global",
+        "constructor_reseeds": false,
+        "seed_policy_id": "pennylane_numpy_seed_base_plus_trial_plus_n_times_100"
+      },
+      "training": {"operation": "train"},
+      "recall": {"operation": "recall", "returns": ["pattern"]}
+    }
+  ],
+  "perturbation": {
+    "procedure_id": "bernoulli",
+    "implementation": "inline_rand_mask",
+    "levels": [0.0, 0.1, 0.2, 0.3],
+    "when": "each_stored_pattern_after_both_models_train"
+  },
+  "metrics": ["batch_recall"],
+  "timings": ["train_time_s", "infer_time_s"],
+  "seeds": {
+    "seed_base": 123,
+    "formula": "123 + trial_id + n_bits * 100",
+    "trial_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+    "seed_policy_id": "pennylane_numpy_seed_base_plus_trial_plus_n_times_100"
+  },
+  "training_schedule": "train_once_per_trial_then_score_each_noise",
+  "declared_training_count": 150,
+  "execution": {
+    "process_model": "single_process",
+    "max_widths": 1,
+    "max_trials": 1,
+    "max_noise_levels": 1,
+    "max_steps": 1,
+    "caps_are_authoritative_in": "benchmark.protocols.scaling"
+  },
+  "output": {
+    "destination": "runs/scaling",
+    "overwrite_archived_results": false,
+    "if_destination_non_empty": "refuse",
+    "files": ["manifest.json", "trials.csv", "trials.json"]
+  },
+  "setting_origin": {
+    "dataset.n_bits_list": "historical",
+    "dataset.n_patterns.rule_id": "historical",
+    "models[0].procedure_id": "historical",
+    "models[0].parameters.steps": "historical",
+    "models[1].procedure_id": "historical",
+    "models[1].parameters.depth_rule_id": "historical",
+    "models[1].parameters.steps": "historical",
+    "models[1].parameters.lr": "historical",
+    "models[1].parameters.minibatch": "historical",
+    "models[1].rng.constructor_reseeds": "historical",
+    "perturbation.procedure_id": "historical",
+    "perturbation.levels": "historical",
+    "seeds.seed_base": "historical",
+    "seeds.formula": "historical",
+    "seeds.trial_ids": "historical",
+    "grid": "historical",
+    "execution.process_model": "historical",
+    "output.destination": "demonstration",
+    "comparable_to_archive": "demonstration"
+  }
+}

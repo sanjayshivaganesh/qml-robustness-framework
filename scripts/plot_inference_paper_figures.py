@@ -1,8 +1,7 @@
-"""Paper figures from the large-scale noise-robustness inference summary.
+"""Paper figures from the inference summary CSV.
 
-Writes into ``results/noise_robustness_inference/paper_figures/``.
-The critical-noise threshold here is the first noise level where mean
-full-pattern accuracy drops below 0.90.
+Writes ``results/noise_robustness_inference/paper_figures/``.
+Critical noise here is the first level with mean full accuracy below 0.90.
 """
 
 import pandas as pd

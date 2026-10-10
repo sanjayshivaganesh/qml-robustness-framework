@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "document_role": "benchmark_request",
+  "loader_status": "not_implemented",
+  "experiment": {
+    "experiment_id": "statistical_significance",
+    "protocol": "statistical_significance"
+  },
+  "historical_reference": {
+    "path": "baseline/configs/original_experiments.json",
+    "experiment_key": "statistical_significance",
+    "role": "audit_record_only"
+  },
+  "grid": "full",
+  "comparable_to_archive": false,
+  "dataset": {
+    "pattern_generator": "numpy.random",
+    "alphabet": [-1, 1],
+    "n_bits_list": [8, 12, 16],
+    "capacity_ratios": [0.2, 0.3, 0.4, 0.5],
+    "n_patterns": {
+      "rule_id": "max_one_or_int_capacity_times_n_bits"
+    }
+  },
+  "models": [
+    {
+      "procedure_id": "hopfield_synchronous",
+      "source": "src.hopfield.Hopfield",
+      "parameters": {"steps": 10},
+      "training": {"operation": "train"},
+      "recall": {"operation": "recall", "returns": ["pattern"]}
+    },
+    {
+      "procedure_id": "qam_paulix",
+      "source": "experiments.statistical_significance.qam_recall",
+      "build": "experiments.statistical_significance.build_qam",
+      "train": "experiments.statistical_significance.train_qam",
+      "parameters": {
+        "depth": 10,
+        "epochs": 100,
+        "lr": 0.02,
+        "init": "normal(0, 0.1)",
+        "encoding": "PauliX where the bit is -1",
+        "ansatz": "RY + linear CNOT"
+      },
+      "closed_over": true,
+      "constructor_parameters": ["n_bits"],
+      "training": {"operation": "train"},
+      "recall": {
+        "operation": "recall",
+        "returns": ["pattern"],
+        "distinct_from": "src.qam.qam_recall"
+      }
+    }
+  ],
+  "perturbation": {
+    "procedure_id": "bernoulli",
+    "implementation": "src.data_generation.corrupt_bernoulli",
+    "when": "each_stored_pattern_inside_hopfield_then_inside_qam",
+    "levels": [0.1, 0.2]
+  },
+  "metrics": ["pattern_accuracy_pair"],
+  "statistics": {
+    "comparison_groups": ["n_bits", "capacity_ratio", "noise"],
+    "paired_difference": "qam_minus_hopfield",
+    "bootstrap": {
+      "implementation": "experiments.statistical_significance.bootstrap_diff",
+      "samples": 5000,
+      "seeded": false,
+      "percentiles": [2.5, 97.5]
+    },
+    "hypothesis_test": {
+      "name": "wilcoxon",
+      "argument_order": ["qam", "hopfield"],
+      "on_failure": 1.0,
+      "alpha_decision": null
+    },
+    "effect_size": {
+      "name": "cliffs_delta",
+      "implementation": "src.metrics.cliffs_delta",
+      "x": "hopfield",
+      "y": "qam_paulix",
+      "magnitude": "src.metrics.cliffs_delta_magnitude",
+      "in_experiment_main": false
+    }
+  },
+  "seeds": {
+    "values": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+    "generators": ["numpy.random.seed", "pennylane.numpy.random.seed"],
+    "formula": "the task seed itself",
+    "reused_across_cells": true
+  },
+  "training_schedule": "train_each_model_inside_each_task",
+  "declared_task_count": 720,
+  "execution": {
+    "process_model": "single_process",
+    "historical_process_model": "multiprocessing_pool",
+    "max_widths": 1,
+    "max_capacities": 1,
+    "max_noise_levels": 1,
+    "max_seeds": 1,
+    "caps_are_authoritative_in": "benchmark.protocols.statistical_significance"
+  },
+  "output": {
+    "destination": "runs/statistical_significance",
+    "overwrite_archived_results": false,
+    "if_destination_non_empty": "refuse",
+    "files": [
+      "manifest.json",
+      "configuration.json",
+      "trials.csv",
+      "trials.json",
+      "summary.csv",
+      "summary.json",
+      "effect_sizes.csv",
+      "effect_sizes.json"
+    ]
+  },
+  "setting_origin": {
+    "dataset.n_bits_list": "historical",
+    "dataset.capacity_ratios": "historical",
+    "dataset.n_patterns.rule_id": "historical",
+    "dataset.pattern_generator": "historical",
+    "models[0].procedure_id": "historical",
+    "models[0].parameters.steps": "historical",
+    "models[1].procedure_id": "historical",
+    "models[1].parameters.depth": "historical",
+    "models[1].parameters.epochs": "historical",
+    "models[1].parameters.lr": "historical",
+    "models[1].parameters.init": "historical",
+    "perturbation.levels": "historical",
+    "seeds.values": "historical",
+    "statistics.bootstrap.samples": "historical",
+    "statistics.bootstrap.seeded": "historical",
+    "statistics.hypothesis_test.on_failure": "historical",
+    "grid": "historical",
+    "execution.process_model": "demonstration",
+    "execution.historical_process_model": "historical",
+    "output.destination": "demonstration",
+    "comparable_to_archive": "demonstration"
+  }
+}

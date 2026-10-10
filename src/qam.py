@@ -1,19 +1,11 @@
-"""Variational quantum associative memory (RY-linear ansatz).
+"""RY-linear variational QAM used by capacity, depth, and convergence.
 
-This module contains the circuit used by the storage-capacity, circuit-depth,
-and convergence experiments. Other experiments in this repository use
-different encodings, ansätze, or (in one case) a classical nearest-neighbor
-proxy. Those implementations stay in the corresponding experiment files so
-that architectures are not accidentally unified.
+Other experiments use different circuits (or nearest neighbor) and keep
+those implementations locally.
 
-There is no class named ``QAM`` or ``QuantumAssociativeMemory`` here.
-Import the functions below, or use the experiment-local QAM class in
-``experiments/noise_robustness_sweep.py`` / ``experiments/scaling.py``.
-
-Circuit (per layer):
-    RY encoding of the input, then ``depth`` layers of per-qubit RY rotations
-    and linear nearest-neighbor CNOTs. Readout is Pauli-Z expectation on
-    each qubit, followed by ``sign`` at recall time.
+Per layer: RY-encode the input, then ``depth`` layers of per-qubit RY and
+nearest-neighbor CNOTs. Readout is Pauli-Z on each qubit; recall applies
+``sign``.
 """
 
 import time
@@ -23,7 +15,7 @@ from pennylane import numpy as np
 
 
 def qam_ansatz(params, wires):
-    """One RY + linear-CNOT layer. ``wires`` is accepted for API compatibility."""
+    """One RY + linear-CNOT layer. ``wires`` is unused except for length."""
     n_qubits = len(wires)
     for i in range(n_qubits):
         qml.RY(params[i], wires=i)
@@ -34,9 +26,8 @@ def qam_ansatz(params, wires):
 def build_ry_linear_circuit(n_bits, depth, return_tuple=False):
     """Build the RY-linear QNode.
 
-    ``return_tuple=True`` matches the storage-capacity / convergence scripts;
-    ``False`` matches the circuit-depth script. Both are valid PennyLane
-    return conventions for a list of expectation values.
+    ``return_tuple=True`` matches capacity/convergence; ``False`` matches
+    the depth script. Both are valid PennyLane return styles.
     """
     dev = qml.device("default.qubit", wires=n_bits)
 
@@ -71,7 +62,7 @@ def train_ry_linear_qam(
     lr=0.05,
     return_tuple=True,
 ):
-    """Train the RY-linear variational QAM. Returns ``(params, circuit, train_time)``."""
+    """Adam-train the RY-linear QAM. Returns ``(params, circuit, train_time)``."""
     circuit = build_ry_linear_circuit(n_bits, depth, return_tuple=return_tuple)
     params = np.random.randn(depth, n_bits) * 0.01
     opt = qml.AdamOptimizer(lr)
@@ -93,9 +84,9 @@ def train_ry_linear_qam(
 
 
 def train_ry_linear_qam_record_loss(patterns, n_bits, depth, steps=300, lr=0.05):
-    """Train while recording the loss before each step, plus a final evaluation.
+    """Same training as capacity, but records loss before each step and once after.
 
-    Matches the original convergence-check training loop.
+    Matches the original convergence script.
     """
     circuit = build_ry_linear_circuit(n_bits, depth, return_tuple=True)
     params = np.random.randn(depth, n_bits) * 0.01
@@ -122,7 +113,7 @@ def train_ry_linear_qam_record_loss(patterns, n_bits, depth, steps=300, lr=0.05)
 
 
 def qam_recall(x, circuit, params):
-    """Map circuit output to a ±1 pattern via ``sign``, with zeros set to +1."""
+    """Map measured expectations to ±1 (zeros → +1)."""
     out = np.array(circuit(params, x))
     out = np.sign(out)
     out[out == 0] = 1
@@ -130,11 +121,7 @@ def qam_recall(x, circuit, params):
 
 
 def nearest_neighbor_recall(patterns, query):
-    """Classical Hamming-distance nearest-neighbor recall.
-
-    Used only by the large-scale inference experiment, where it is labeled
-    as a QAM proxy. This is not a quantum circuit.
-    """
+    """Hamming nearest neighbor. Used as the inference experiment's ``qam`` column."""
     distances = onp.sum(patterns != query, axis=1) / query.shape[0]
     best_idx = int(onp.argmin(distances))
     return patterns[best_idx]

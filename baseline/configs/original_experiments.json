@@ -1,0 +1,204 @@
+{
+  "document_type": "transcribed_baseline_configuration",
+  "transcribed_on": "2026-10-09",
+  "source": "Module-level constants and control flow in the working tree. This file is a record, not a runner. It does not execute experiments and it does not contain regenerated metrics.",
+  "device": "default.qubit",
+  "pattern_alphabet": [-1, 1],
+  "experiments": {
+    "noise_robustness_sweep": {
+      "module": "experiments.noise_robustness_sweep",
+      "role": "Primary paired Hopfield versus variational QAM comparison.",
+      "n_bits_list": [4, 6, 8, 10],
+      "trials": 30,
+      "seeds": "range(trials), passed as the third element of each task. Values are 0..29.",
+      "corruption_rates": [0.0, 0.1, 0.2, 0.3, 0.4],
+      "corruption": "corrupt_bernoulli; each bit flips independently with probability corruption. The helper is called without an explicit rng, so it uses the global NumPy RNG.",
+      "capacity_ratio": 0.3,
+      "n_patterns": "max(1, int(capacity_ratio * n_bits))",
+      "hopfield": {
+        "class": "src.hopfield.Hopfield",
+        "updates": "synchronous sign(Wx)",
+        "steps": 10,
+        "zero_to": 1
+      },
+      "qam": {
+        "class": "experiments.noise_robustness_sweep.QAM",
+        "encoding": "RX(x * pi) and RY(x * pi / 2)",
+        "ansatz": "Rot + linear CNOT",
+        "param_shape": "(depth, n_bits, 3)",
+        "depth_argument": 6,
+        "depth_used": "min(6, n_bits)",
+        "train_steps": 300,
+        "lr": 0.05,
+        "optimizer": "qml.AdamOptimizer",
+        "loss": "mean over patterns of sum of squared Pauli-Z errors (not the per-bit mean used by src.qam)",
+        "init_scale": 0.01,
+        "init_reseed": "QAM.__init__ calls pennylane.numpy.random.seed(42) before np.random.randn. That call resets the NumPy global RNG."
+      },
+      "metrics": ["full-pattern accuracy", "bit accuracy", "mean train time", "mean inference time per bit"],
+      "ci": "mean_std_ci: 1.96 * population std / sqrt(n_trials)",
+      "outputs": [
+        "results/noise_robustness_sweep/summary/noise_robustness_sweep.csv",
+        "results/noise_robustness_sweep/plots/noise_full_acc_n{n}.png",
+        "results/noise_robustness_sweep/plots/noise_bit_acc_n{n}.png"
+      ]
+    },
+    "storage_capacity": {
+      "module": "experiments.storage_capacity",
+      "n_bits_list": [8, 12, 16],
+      "m_values": {
+        "n_below_16": "range(1, n_bits + 1)",
+        "n_at_least_16": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16]
+      },
+      "trials_per_m": 5,
+      "seeds": "range(trials_per_m), reapplied with numpy.random.seed for every (n_bits, m). Values are 0..4.",
+      "recall_noise": 0.15,
+      "corruption": "corrupt_fixed_count with numpy.random. Flips max(1, int(n_bits * 0.15)) bits.",
+      "hopfield": {
+        "class": "src.hopfield.Hopfield",
+        "updates": "synchronous sign(Wx)",
+        "steps": 10
+      },
+      "qam": {
+        "functions": ["src.qam.train_ry_linear_qam", "src.qam.qam_recall"],
+        "encoding": "RY(x * pi)",
+        "ansatz": "RY + linear CNOT",
+        "param_shape": "(depth, n_bits)",
+        "depth": "min(8, n_bits)",
+        "train_steps": 100,
+        "lr": 0.05,
+        "init_scale": 0.01,
+        "return_tuple": true
+      },
+      "bootstrap_samples": 2000,
+      "hypothesis_test": "scipy.stats.wilcoxon on the 5 paired trial scores; Exception yields None",
+      "critical_capacity": "smallest capacity_ratio whose mean full accuracy is below 0.75",
+      "outputs": [
+        "results/storage_capacity/summary/storage_capacity_sweep.csv",
+        "results/storage_capacity/summary/phase_transition.csv",
+        "results/storage_capacity/summary/statistical_significance_summary.csv",
+        "results/storage_capacity/summary/experiment_summary.txt"
+      ]
+    },
+    "circuit_depth": {
+      "module": "experiments.circuit_depth",
+      "cases": {"8": 4, "12": 8, "16": 12},
+      "depths": [1, 2, 4, 6, 8, 10, 12],
+      "trials": 5,
+      "seeds": "range(trials), values 0..4, reapplied per (n_bits, depth)",
+      "train_steps": 100,
+      "lr": 0.05,
+      "recall_noise": 0.15,
+      "corruption": "corrupt_fixed_count",
+      "qam": {
+        "function": "src.qam.train_ry_linear_qam",
+        "return_tuple": false,
+        "recall": "inlined sign of circuit expectations; zeros become +1"
+      },
+      "outputs": ["results/circuit_depth/summary/depth_scaling.csv"]
+    },
+    "convergence": {
+      "module": "experiments.convergence",
+      "configs": [[8, 4], [12, 8], [16, 12]],
+      "train_steps": 300,
+      "lr": 0.05,
+      "depth": "min(8, n_bits)",
+      "seeds": [0, 1, 2],
+      "qam": "src.qam.train_ry_linear_qam_record_loss",
+      "recorded_loss_length": "steps + 1 (loss before each step, plus one evaluation after the last step)",
+      "outputs": [
+        "results/convergence/raw/convergence_n{n}_m{m}.csv",
+        "results/convergence/summary/convergence_summary.csv"
+      ]
+    },
+    "scaling": {
+      "module": "experiments.scaling",
+      "n_bits_list": [4, 6, 8, 12, 16],
+      "noise_levels": [0.0, 0.1, 0.2, 0.3],
+      "trials": 30,
+      "random_seed_base": 123,
+      "seed_formula": "123 + trial_id + n_bits * 100",
+      "n_patterns": "min(max(1, n_bits // 2), 6)",
+      "hopfield": {
+        "class": "src.hopfield.HopfieldAsyncRandom",
+        "updates": "10 random-order asynchronous sweeps",
+        "threshold": "state becomes +1 if the local field is >= 0, else -1",
+        "permutation_rng": "pennylane.numpy.random"
+      },
+      "qam": {
+        "class": "experiments.scaling.QAM",
+        "encoding": "RY(x * pi)",
+        "ansatz": "Rot + linear CNOT",
+        "depth": "min(6, n_bits)",
+        "steps": 200,
+        "lr": 0.05,
+        "minibatch": 2,
+        "early_stop": "15 consecutive steps with absolute loss change below 1e-4"
+      },
+      "training_schedule": "Both models are trained once per trial, then scored at every noise level.",
+      "outputs": ["results/scaling/raw/scaling_sweep.csv"]
+    },
+    "statistical_significance": {
+      "module": "experiments.statistical_significance",
+      "n_bits_list": [8, 12, 16],
+      "capacity_ratios": [0.2, 0.3, 0.4, 0.5],
+      "corruption_levels": [0.1, 0.2],
+      "seeds": "range(30)",
+      "n_patterns": "max(1, int(capacity_ratio * n_bits))",
+      "corruption": "corrupt_bernoulli on the global NumPy RNG",
+      "hopfield": {
+        "class": "src.hopfield.Hopfield",
+        "steps": 10
+      },
+      "qam": {
+        "functions": ["build_qam", "train_qam", "qam_recall"],
+        "encoding": "PauliX on qubits whose bit is -1",
+        "ansatz": "RY + linear CNOT",
+        "depth": 10,
+        "epochs": 100,
+        "lr": 0.02,
+        "init": "normal(0, 0.1)"
+      },
+      "bootstrap_samples": 5000,
+      "bootstrap_quantity": "paired difference QAM minus Hopfield",
+      "hypothesis_test": "wilcoxon; Exception yields p = 1.0",
+      "outputs": [
+        "results/statistical_significance/raw/statistical_rows.csv",
+        "results/statistical_significance/summary/statistical_summary.csv"
+      ]
+    },
+    "noise_robustness_inference": {
+      "module": "experiments.noise_robustness_inference",
+      "n_bits_list": [8, 12, 16, 24, 32, 48, 64, 96, 128],
+      "capacity_ratios": [0.1, 0.25, 0.5, 0.75, 1.0],
+      "noise_levels": "numpy.linspace(0.0, 0.5, 16)",
+      "trials_per_config": 300,
+      "random_seed_base": 42,
+      "seed_formula": "42 + trial_id + int(n_bits * 1000) + int(capacity_ratio * 100) + int(noise_p * 1000)",
+      "n_patterns": "max(1, int(n_bits * capacity_ratio))",
+      "query": "one uniformly chosen stored pattern per trial",
+      "corruption": "inlined Bernoulli mask, numpy.random.rand(n_bits) < noise_p",
+      "hopfield": {
+        "weights": "src.hopfield.hopfield_hebbian_weights",
+        "recall": "src.hopfield.hopfield_async_sequential_recall",
+        "steps": 20,
+        "energy": "E = -0.5 * x^T W x"
+      },
+      "model_labeled_qam": {
+        "function": "src.qam.nearest_neighbor_recall",
+        "rule": "stored pattern with smallest Hamming distance to the query",
+        "circuit": false
+      },
+      "summary_bootstrap": 200,
+      "summary_bootstrap_seed": "aggregate_results does not seed NumPy before resampling",
+      "critical_noise_floor_0_50": "scripts.plot_critical_noise_threshold.ACCURACY_THRESHOLD = 0.50; last noise whose mean full accuracy is still >= 0.50",
+      "critical_noise_floor_0_90": "scripts.plot_inference_paper_figures.CRITICAL_ACCURACY = 0.90; first noise whose mean full accuracy is < 0.90; groups that never cross are omitted",
+      "task_count": 216000,
+      "raw_row_count_expected": 432000,
+      "outputs": [
+        "results/noise_robustness_inference/raw/noise_inference_rows.csv",
+        "results/noise_robustness_inference/summary/noise_inference_summary.csv"
+      ]
+    }
+  }
+}
